@@ -1,0 +1,14 @@
+# Built binaries (commands under cmd/ build to these names)
+/dist/
+/slot-web
+/slot-verify
+/example-game
+
+# Test & profiling artifacts
+*.test
+*.out
+*.pprof
+coverage.*
+
+# OS / editor cruft
+.DS_Store

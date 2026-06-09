@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>1×3 Slot</title>
+<style>
+  body { font-family: system-ui, sans-serif; text-align: center; background:#111; color:#eee; }
+  #reels { font-size: 64px; letter-spacing: 16px; margin: 24px; }
+  button { font-size: 20px; padding: 8px 24px; cursor: pointer; }
+  #status { margin-top: 16px; min-height: 1.5em; font-size: 20px; }
+  .win { color: #ffd54a; }
+</style>
+</head>
+<body>
+  <h1>1×3 Slot</h1>
+  <div id="reels">❔ ❔ ❔</div>
+  <div>Balance: <span id="balance">—</span> | Bet: <span id="bet">1</span></div>
+  <p><button id="spin">SPIN</button> <button id="reset">RESET</button></p>
+  <div id="status"></div>
+<script>
+const reelsEl = document.getElementById('reels');
+const balanceEl = document.getElementById('balance');
+const statusEl = document.getElementById('status');
+const spinBtn = document.getElementById('spin');
+const resetBtn = document.getElementById('reset');
+const GLYPHS = ['🍒','🍋','🔔','⭐','7️⃣'];
+
+async function post(path, body) {
+  const r = await fetch(path, {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body||{})});
+  return r.json();
+}
+function render(res) {
+  reelsEl.textContent = res.reels.join(' ');
+  balanceEl.textContent = res.balance;
+  if (res.isWin) {
+    statusEl.className = 'win';
+    statusEl.textContent = `WIN ${res.winSymbol} ×${res.multiplier} → +${res.payout}`;
+  } else {
+    statusEl.className = '';
+    statusEl.textContent = 'No win';
+  }
+}
+spinBtn.onclick = async () => {
+  spinBtn.disabled = true;
+  // brief shuffle animation
+  let ticks = 8;
+  const anim = setInterval(() => {
+    reelsEl.textContent = [0,0,0].map(() => GLYPHS[Math.floor(Math.random()*GLYPHS.length)]).join(' ');
+    if (--ticks <= 0) clearInterval(anim);
+  }, 60);
+  try {
+    const res = await post('/spin', {bet: 1});
+    if (res.error) { statusEl.textContent = res.error; }
+    else { setTimeout(() => render(res), 520); }
+  } finally {
+    setTimeout(() => { spinBtn.disabled = false; }, 540);
+  }
+};
+resetBtn.onclick = async () => { render(await post('/reset', {})); };
+// initialize balance display
+post('/reset', {}).then(render);
+</script>
+</body>
+</html>
